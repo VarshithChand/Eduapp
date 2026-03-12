@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='Welcome.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css" />
+</head>
+<body>
+    <!-- Animated background particles -->
+    <div class="particles-bg" id="particles"></div>
+
+    <div class="page-wrapper">
+        <header class="enhanced-header">
+            <div class="header-content">
+                <h1>
+                    <span class="welcome-text">Welcome,</span>
+                    <span class="username-highlight">{{ username }}</span>
+                    <div class="typing-cursor"></div>
+                </h1>
+                <div class="header-buttons">
+                    <a href="{{ url_for('uploads') }}">
+                        <button class="upload-button modern-btn">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Upload File</span>
+                        </button>
+                    </a>
+                    <a href="{{ url_for('logout') }}">
+                        <button class="logout-button modern-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
+                    </a>
+                </div>
+            </div>
+            <div class="header-wave"></div>
+        </header>
+
+        <div class="main-container">
+            <!-- Profile Section -->
+            <div class="section-container profile-section" data-aos="fade-up">
+                <div class="section-header">
+                    <i class="fas fa-user-circle section-icon"></i>
+                    <h2>Profile</h2>
+                    <div class="section-badge">Personal</div>
+                </div>
+                <div class="profile-card">
+                    <div class="profile-avatar" id="profileAvatarDisplay">
+                        <img id="profilePhotoImg" src="" alt="Profile Photo" style="display:none; width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                        <i id="profilePhotoIcon" class="fas fa-user"></i>
+                    </div>
+                    <ul class="file-list" id="profileList">
+                        <li class="file-item profile-item" style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <i class="fas fa-id-badge"></i>
+                                <div class="item-content">
+                                    <strong>Username:</strong>
+                                    <span class="username-tag" id="usernameDisplay">{{ username }}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="profile-edit-icon-btn" id="editUsernameBtn" title="Edit username">
+                                <i class="fas fa-edit" style="font-size:0.85rem;"></i>
+                            </button>
+                        </li>
+                        <li class="file-item profile-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <div class="item-content">
+                                <strong>Role:</strong>
+                                <span class="role-badge {{ 'superuser' if session.get('is_superuser') else 'user' }}">
+                                    {{ 'Superuser' if session.get('is_superuser') else 'User' }}
+                                </span>
+                            </div>
+                        </li>
+                        {% if user_profile.get('full_name') %}
+                        <li class="file-item profile-item">
+                            <i class="fas fa-user-tag"></i>
+                            <div class="item-content">
+                                <strong>Full Name:</strong>
+                                <span class="profile-data">{{ user_profile.get('full_name', 'Not set') }}</span>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if user_profile.get('email') %}
+                        <li class="file-item profile-item">
+                            <i class="fas fa-envelope"></i>
+                            <div class="item-content">
+                                <strong>Email:</strong>
+                                <span class="profile-data">{{ user_profile.get('email', 'Not set') }}</span>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if user_profile.get('contact_number') %}
+                        <li class="file-item profile-item">
+                            <i class="fas fa-phone"></i>
+                            <div class="item-content">
+                                <strong>Contact:</strong>
+                                <span class="profile-data">{{ user_profile.get('contact_number', 'Not set') }}</span>
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% if user_profile.get('date_of_birth') %}
+                        <li class="file-item profile-item">
+                            <i class="fas fa-birthday-cake"></i>
+                            <div class="item-content">
+                                <strong>Date of Birth:</strong>
+                                <span class="profile-data">{{ user_profile.get('date_of_birth', 'Not set') }}</span>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    <div class="profile-actions">
+                        <button type="button" class="show-toggle-btn modern-btn" id="showToggleBtn">
+                            <i class="fas fa-chevron-down"></i>
+                            <span>Show More</span>
+                        </button>
+                        <button class="edit-profile-btn modern-btn" id="editProfileBtn">
+                            <i class="fas fa-pen"></i>
+                            <span>Edit Profile</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Edit Modal -->
+            <div class="profile-modal" id="profileModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Edit Profile</h3>
+                        <button class="close-modal-btn" id="closeModalBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <form class="profile-form" id="profileForm">
+                        <div class="form-group">
+                            <label for="username">
+                                <i class="fas fa-id-badge"></i>
+                                Username
+                            </label>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                placeholder="Enter your username"
+                                value="{{ username }}"
+                                required
+                            >
+                            <small style="color: #888; display:block; margin-top:0.5rem;">Your unique username for login</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="profilePhoto">
+                                <i class="fas fa-camera"></i>
+                                Profile Photo
+                            </label>
+                            <input 
+                                type="file" 
+                                id="profilePhoto" 
+                                name="profile_photo" 
+                                accept="image/*"
+                                style="padding:0.5rem; border:2px dashed #4f8cff; border-radius:8px;"
+                            >
+                            <small style="color: #888; display:block; margin-top:0.5rem;">Supported formats: JPG, PNG, GIF (Max 5MB)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fullName">
+                                <i class="fas fa-user-tag"></i>
+                                Full Name
+                            </label>
+                            <input 
+                                type="text" 
+                                id="fullName" 
+                                name="full_name" 
+                                placeholder="Enter your full name"
+                                value="{{ user_profile.get('full_name', '') }}"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">
+                                <i class="fas fa-envelope"></i>
+                                Email Address
+                            </label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                placeholder="Enter your email"
+                                value="{{ user_profile.get('email', '') }}"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact">
+                                <i class="fas fa-phone"></i>
+                                Contact Number
+                            </label>
+                            <input 
+                                type="tel" 
+                                id="contact" 
+                                name="contact_number" 
+                                placeholder="Enter your phone number"
+                                value="{{ user_profile.get('contact_number', '') }}"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dob">
+                                <i class="fas fa-birthday-cake"></i>
+                                Date of Birth
+                            </label>
+                            <input 
+                                type="date" 
+                                id="dob" 
+                                name="date_of_birth"
+                                value="{{ user_profile.get('date_of_birth', '') }}"
+                            >
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="cancel-btn modern-btn" id="cancelBtn">
+                                <i class="fas fa-times"></i>
+                                <span>Cancel</span>
+                            </button>
+                            <button type="submit" class="save-btn modern-btn" id="saveProfileBtn">
+                                <i class="fas fa-save"></i>
+                                <span id="saveButtonText">Save Profile</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Courses Section -->
+            <div class="section-container courses-section" data-aos="fade-up" data-aos-delay="100">
+                <div class="section-header">
+                    <i class="fas fa-graduation-cap section-icon"></i>
+                    <h2>Courses</h2>
+                    {# Set courses_list first to ensure it's properly defined #}
+                    {% set courses_list = COURSES if (COURSES is defined and COURSES) else [
+                        {"name": "Python", "icon": "fab fa-python", "color": "#3776ab", "progress": 85},
+                        {"name": "Java", "icon": "fab fa-java", "color": "#f89820", "progress": 72},
+                        {"name": "C", "icon": "fas fa-code", "color": "#00599c", "progress": 68},
+                        {"name": "C++", "icon": "fas fa-code", "color": "#004482", "progress": 75}
+                    ] %}
+                    <div class="section-badge">{{ courses_list|length }} Available</div>
+                </div>
+                <div class="courses-grid" id="coursesGrid">
+                    
+                    {% for c in courses_list %}
+                        {# Normalize course into dict if courses_list contains plain strings #}
+                        {% if c is string %}
+                            {% set course = {"name": c, "icon": "fas fa-laptop-code", "color": "#4f8cff", "progress": (loop.index * 17) % 100} %}
+                        {% else %}
+                            {% set course = c %}
+                        {% endif %}
+
+                        {# Map to route for each course (fallback to courses page) #}
+                        {% set cname = course.name.lower() %}
+                        {% if 'python' in cname %}
+                            {% set target = url_for('python_course') %}
+                        {% elif 'java' in cname %}
+                            {% set target = url_for('java_course') %}
+                        {% elif 'c++' in cname or 'c#' in cname %}
+                            {% set target = url_for('cpp_course') %}
+                        {% elif cname == 'c' and 'c++' not in cname %}
+                            {% set target = url_for('c_course') %}
+                        {% elif 'aws' in cname %}
+                            {% set target = url_for('aws_course') %}
+                        {% elif 'azure' in cname %}
+                            {% set target = url_for('azure_course') %}
+                        {% elif 'gcp' in cname %}
+                            {% set target = url_for('gcp_course') %}
+                        {% else %}
+                            {% set target = url_for('courses') %}
+                        {% endif %}
+
+                        <div class="course-card" data-course="{{ course.name }}">
+                            <a class="course-link-card" href="{{ target }}" aria-label="Open {{ course.name }}">
+                                <div class="course-icon" style="color: {{ course.color }}">
+                                    <i class="{{ course.icon }}"></i>
+                                </div>
+                                <div class="course-info">
+                                    <h3>{{ course.name }}</h3>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: {{ course.progress }}%; background: {{ course.color }}"></div>
+                                    </div>
+                                    <span class="progress-text">{{ course.progress }}% Complete</span>
+                                </div>
+                                <div class="course-arrow">
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="courses-actions">
+                    <button type="button" class="show-toggle-btn modern-btn" id="coursesToggleBtn">
+                        <i class="fas fa-chevron-down"></i>
+                        <span>Show More Courses</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Updates Section -->
+            <div class="section-container updates-section" data-aos="fade-up" data-aos-delay="200">
+                <div class="section-header">
+                    <i class="fas fa-bell section-icon"></i>
+                    <h2>Updates</h2>
+                    <div class="notification-dot"></div>
+                </div>
+                <div class="updates-container">
+                    {% if superuser_files %}
+                        <ul class="file-list updates-list">
+                            {% for file in superuser_files %}
+                                <li class="file-item update-item">
+                                    <div class="update-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="update-content">
+                                        {# link to serve_file for the superuser (varshith) files #}
+                                        <a href="{{ url_for('serve_file', username='varshith', filename=file) }}" target="_blank" rel="noopener noreferrer">
+                                            {{ file }}
+                                        </a>
+                                        <span class="update-time">New</span>
+                                    </div>
+                                    <div class="update-arrow">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="no-updates">
+                            <i class="fas fa-inbox"></i>
+                            <p>No updates from superuser.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="updates-actions">
+                    <button type="button" class="show-toggle-btn modern-btn" id="updatesToggleBtn">
+                        <i class="fas fa-chevron-down"></i>
+                        <span>Show More Updates</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Time Table Section -->
+            <div class="section-container timetable-section" data-aos="fade-up" data-aos-delay="300">
+                <div class="section-header">
+                    <i class="fas fa-calendar-alt section-icon"></i>
+                    <h2>Time Table</h2>
+                    <div class="section-badge">Weekly</div>
+                </div>
+                <div class="timetable-grid">
+                    {% for day in [
+                        {"day": "Mon", "subject": "Python", "time": "09:00 AM", "color": "#3776ab"},
+                        {"day": "Tue", "subject": "Java", "time": "10:00 AM", "color": "#f89820"},
+                        {"day": "Wed", "subject": "C++", "time": "11:00 AM", "color": "#004482"},
+                        {"day": "Thu", "subject": "Projects", "time": "02:00 PM", "color": "#28a745"},
+                        {"day": "Fri", "subject": "Assessment", "time": "03:00 PM", "color": "#dc3545"}
+                    ] %}
+                        <div class="timetable-card">
+                            <div class="day-badge" style="background: {{ day.color }}">{{ day.day }}</div>
+                            <div class="timetable-info">
+                                <h4>{{ day.subject }}</h4>
+                                <span class="time-slot">
+                                    <i class="fas fa-clock"></i>
+                                    {{ day.time }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="section-container results-section" data-aos="fade-up" data-aos-delay="400">
+                <div class="section-header">
+                    <i class="fas fa-chart-line section-icon"></i>
+                    <h2>Results</h2>
+                    <div class="section-badge">Latest</div>
+                </div>
+                <div class="results-grid">
+                    {% for result in [
+                        {"subject": "Python", "score": 92, "grade": "A+", "color": "#3776ab"},
+                        {"subject": "Java", "score": 89, "grade": "A", "color": "#f89820"},
+                        {"subject": "C++", "score": 85, "grade": "A", "color": "#004482"},
+                        {"subject": "DSA", "score": 90, "grade": "A+", "color": "#28a745"}
+                    ] %}
+                        <div class="result-card">
+                            <div class="result-header">
+                                <h4>{{ result.subject }}</h4>
+                                <div class="grade-badge" style="background: {{ result.color }}">{{ result.grade }}</div>
+                            </div>
+                            <div class="score-display">
+                                <div class="score-circle" style="border-color: {{ result.color }}">
+                                    <span class="score-number">{{ result.score }}</span>
+                                    <span class="score-percent">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Chat Bubble -->
+    <div class="chat-bubble" id="chatBubble" aria-label="Open chat assistant" role="button" tabindex="0">
+        <div class="chat-pulse"></div>
+        <i class="fas fa-comments"></i>
+    </div>
+
+    <!-- Enhanced Chat Box -->
+    <div class="chat-box" id="chatBox" role="dialog" aria-modal="true" aria-labelledby="chatTitle" tabindex="-1">
+        <div class="chat-header">
+            <div class="chat-title-section">
+                <div class="ai-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="chat-title-text">
+                    <span id="chatTitle">AI Assistant</span>
+                    <span class="chat-status">Online</span>
+                </div>
+            </div>
+            <button class="minimize-btn" id="minimizeBtn" aria-label="Close chat">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages" aria-live="polite" aria-relevant="additions">
+            <div class="message bot">
+                <div class="message-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    Hello! I'm your AI assistant. I can help you with programming questions, course materials, or any other academic support you need. How can I assist you today?
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator" aria-live="assertive" hidden>
+            <div class="typing-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="typing-dots">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <input
+                    type="text"
+                    id="userInput"
+                    placeholder="Ask me about Python, Java, C++, or your coursework..."
+                    aria-label="Type your message"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                />
+                <button id="sendBtn" aria-label="Send message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-javascript.min.js"></script>
+
+    <script>
+        // Particle background animation
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            const numberOfParticles = 50;
+            for (let i = 0; i < numberOfParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                particles.appendChild(particle);
+            }
+        }
+
+        // Intersection Observer for animations
+        function initializeAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.section-container').forEach(section => {
+                observer.observe(section);
+            });
+        }
+
+        // Course card interactions
+        function initializeCourseCards() {
+            document.querySelectorAll('.course-card').forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        }
+
+        // Chat functionality (same as before)
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            initializeAnimations();
+            initializeCourseCards();
+
+            const chatBubble = document.getElementById('chatBubble');
+            const chatBox = document.getElementById('chatBox');
+            const minimizeBtn = document.getElementById('minimizeBtn');
+            const userInput = document.getElementById('userInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const chatMessages = document.getElementById('chatMessages');
+            const typingIndicator = document.getElementById('typingIndicator');
+
+            chatBubble.addEventListener('click', () => {
+                chatBox.classList.add('active');
+                chatBubble.style.display = 'none';
+                userInput.focus();
+                loadChatHistory();
+            });
+
+            chatBubble.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    chatBubble.click();
+                }
+            });
+
+            minimizeBtn.addEventListener('click', () => {
+                chatBox.classList.remove('active');
+                chatBubble.style.display = 'flex';
+                chatBubble.focus();
+            });
+
+            function createCopyButton() {
+                const button = document.createElement('button');
+                button.className = 'copy-button';
+                button.innerHTML = '<i class="fas fa-copy"></i>';
+                button.onclick = (e) => {
+                    const codeBlock = e.target.closest('.code-block').querySelector('code');
+                    navigator.clipboard.writeText(codeBlock.textContent);
+                    button.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        button.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 2000);
+                };
+                return button;
+            }
+
+            function formatCodeBlock(text) {
+                const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+                return text.replace(codeBlockRegex, (match, language, code) => {
+                    const div = document.createElement('div');
+                    div.className = 'code-block';
+                    const codeElement = document.createElement('code');
+                    codeElement.className = language ? `language-${language}` : '';
+                    codeElement.textContent = code.trim();
+                    div.appendChild(codeElement);
+                    div.appendChild(createCopyButton());
+                    return div.outerHTML;
+                });
+            }
+
+            function formatMessage(text) {
+                text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                text = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+                text = text.replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>');
+                return text;
+            }
+
+            function addMessage(message, type, save = true) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', type);
+                const messageContent = document.createElement('div');
+                messageContent.classList.add('message-content');
+
+                if (type === 'user') {
+                    const userAvatar = document.createElement('div');
+                    userAvatar.classList.add('message-avatar', 'user-avatar');
+                    userAvatar.innerHTML = '<i class="fas fa-user"></i>';
+                    messageDiv.appendChild(userAvatar);
+                    messageContent.textContent = message;
+                } else {
+                    const botAvatar = document.createElement('div');
+                    botAvatar.classList.add('message-avatar');
+                    botAvatar.innerHTML = '<i class="fas fa-robot"></i>';
+                    messageDiv.appendChild(botAvatar);
+
+                    if (message.includes('```')) {
+                        messageContent.innerHTML = formatCodeBlock(message);
+                    } else {
+                        messageContent.innerHTML = formatMessage(message);
+                    }
+                }
+
+                messageDiv.appendChild(messageContent);
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                if (window.Prism) {
+                    Prism.highlightAllUnder(messageDiv);
+                }
+
+                if (save) saveChatHistory();
+            }
+
+            function showTyping(show = true) {
+                typingIndicator.hidden = !show;
+                if (show) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+
+            function saveChatHistory() {
+                const messages = [];
+                chatMessages.querySelectorAll('.message').forEach((msg) => {
+                    const content = msg.querySelector('.message-content');
+                    messages.push({
+                        type: msg.classList.contains('user') ? 'user' : 'bot',
+                        content: content.textContent || content.innerText,
+                        html: content.innerHTML.includes('code-block') ? content.innerHTML : null,
+                    });
+                });
+                // Chat history is now saved automatically on the server
+                // No need to save to localStorage anymore
+            }
+
+            function loadChatHistory() {
+                // Load chat history from server for current user
+                fetch('/api/student/chat-history', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.messages && data.messages.length > 0) {
+                            chatMessages.innerHTML = '';
+                            data.messages.forEach((msg) => {
+                                addMessage(msg.content, msg.type, false);
+                            });
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
+                    })
+                    .catch(err => {
+                        console.log('Could not load chat history:', err);
+                        // Keep the initial welcome message if loading fails
+                    });
+            }
+
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (!message) return;
+
+                addMessage(message, 'user');
+
+                userInput.value = '';
+                userInput.disabled = true;
+                sendBtn.disabled = true;
+
+                showTyping(true);
+
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message }),
+                })
+                    .then((res) => res.json())
+                    .then((data) => {
+                        showTyping(false);
+                        if (data.response) {
+                            addMessage(data.response, 'bot');
+                        } else {
+                            addMessage('Sorry, something went wrong.', 'bot');
+                        }
+                    })
+                    .catch(() => {
+                        showTyping(false);
+                        addMessage('Sorry, something went wrong.', 'bot');
+                    })
+                    .finally(() => {
+                        userInput.disabled = false;
+                        sendBtn.disabled = false;
+                        userInput.focus();
+                    });
+            }
+
+            sendBtn.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            chatBox.classList.remove('active');
+            chatBubble.style.display = 'flex';
+        });
+
+        // Profile Show More/Less Toggle
+        function initializeProfileToggle() {
+            const showToggleBtn = document.getElementById('showToggleBtn');
+            const profileList = document.getElementById('profileList');
+            const profileItems = profileList.querySelectorAll('.profile-item');
+            let isExpanded = false;
+
+            // Hide extra items initially (show first 2)
+            profileItems.forEach((item, index) => {
+                if (index > 1) {
+                    item.style.display = 'none';
+                }
+            });
+
+            showToggleBtn.addEventListener('click', () => {
+                isExpanded = !isExpanded;
+                profileItems.forEach((item, index) => {
+                    if (index > 1) {
+                        item.style.display = isExpanded ? 'flex' : 'none';
+                        if (isExpanded) {
+                            item.style.animation = 'fadeIn 0.3s ease';
+                        }
+                    }
+                });
+                showToggleBtn.innerHTML = isExpanded ? 
+                    '<i class="fas fa-chevron-up"></i><span>Show Less</span>' : 
+                    '<i class="fas fa-chevron-down"></i><span>Show More</span>';
+            });
+        }
+
+        // Initialize Courses Toggle
+        function initializeCoursesToggle() {
+            const coursesToggleBtn = document.getElementById('coursesToggleBtn');
+            const coursesGrid = document.getElementById('coursesGrid');
+            const courseCards = coursesGrid.querySelectorAll('.course-card');
+            let isExpanded = false;
+
+            // Hide extra courses initially (show first 3)
+            courseCards.forEach((card, index) => {
+                if (index > 2) {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Hide toggle if 3 or fewer courses
+            if (courseCards.length <= 3) {
+                coursesToggleBtn.style.display = 'none';
+                return;
+            }
+
+            coursesToggleBtn.addEventListener('click', () => {
+                isExpanded = !isExpanded;
+                courseCards.forEach((card, index) => {
+                    if (index > 2) {
+                        card.style.display = isExpanded ? 'flex' : 'none';
+                        if (isExpanded) {
+                            card.style.animation = 'fadeIn 0.3s ease';
+                        }
+                    }
+                });
+                coursesToggleBtn.innerHTML = isExpanded ? 
+                    '<i class="fas fa-chevron-up"></i><span>Show Less Courses</span>' : 
+                    '<i class="fas fa-chevron-down"></i><span>Show More Courses</span>';
+            });
+        }
+
+        // Initialize Updates Toggle
+        function initializeUpdatesToggle() {
+            const updatesToggleBtn = document.getElementById('updatesToggleBtn');
+            const updatesList = document.querySelector('.updates-list');
+            
+            // If no updates list, hide toggle
+            if (!updatesList) {
+                updatesToggleBtn.style.display = 'none';
+                return;
+            }
+
+            const updateItems = updatesList.querySelectorAll('.update-item');
+            let isExpanded = false;
+
+            // Hide extra updates initially (show first 3)
+            updateItems.forEach((item, index) => {
+                if (index > 2) {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Hide toggle if 3 or fewer items
+            if (updateItems.length <= 3) {
+                updatesToggleBtn.style.display = 'none';
+                return;
+            }
+
+            updatesToggleBtn.addEventListener('click', () => {
+                isExpanded = !isExpanded;
+                updateItems.forEach((item, index) => {
+                    if (index > 2) {
+                        item.style.display = isExpanded ? 'flex' : 'none';
+                        if (isExpanded) {
+                            item.style.animation = 'fadeIn 0.3s ease';
+                        }
+                    }
+                });
+                updatesToggleBtn.innerHTML = isExpanded ? 
+                    '<i class="fas fa-chevron-up"></i><span>Show Less Updates</span>' : 
+                    '<i class="fas fa-chevron-down"></i><span>Show More Updates</span>';
+            });
+        }
+
+        // Load and display profile photo
+        function loadProfilePhoto() {
+            fetch('/get_profile_photo')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.photo) {
+                        const photoImg = document.getElementById('profilePhotoImg');
+                        const photoIcon = document.getElementById('profilePhotoIcon');
+                        photoImg.src = data.photo;
+                        photoImg.style.display = 'block';
+                        photoIcon.style.display = 'none';
+                    }
+                })
+                .catch(err => console.log('No profile photo found'));
+        }
+
+        // Profile Modal Functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeProfileToggle();
+            initializeCoursesToggle();
+            initializeUpdatesToggle();
+            loadProfilePhoto();
+
+            const profileModal = document.getElementById('profileModal');
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const profileForm = document.getElementById('profileForm');
+
+            // Open modal
+            editProfileBtn.addEventListener('click', () => {
+                profileModal.classList.add('active');
+            });
+
+            // Close modal functions
+            function closeModal() {
+                profileModal.classList.remove('active');
+            }
+
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+
+            // Close modal when clicking outside
+            profileModal.addEventListener('click', (e) => {
+                if (e.target === profileModal) {
+                    closeModal();
+                }
+            });
+
+            // Form submission
+            profileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = {
+                    username: document.getElementById('username').value.trim(),
+                    full_name: document.getElementById('fullName').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    contact_number: document.getElementById('contact').value.trim(),
+                    date_of_birth: document.getElementById('dob').value.trim()
+                };
+
+                // Validate required fields
+                if (!formData.full_name || !formData.email) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                // Validate username
+                if (!formData.username || formData.username.length < 3) {
+                    alert('Username must be at least 3 characters');
+                    return;
+                }
+
+                try {
+                    // Handle file upload if present
+                    const photoFile = document.getElementById('profilePhoto').files[0];
+                    
+                    if (photoFile) {
+                        const photoFormData = new FormData();
+                        photoFormData.append('profile_photo', photoFile);
+                        
+                        const photoResponse = await fetch('/upload_profile_photo', {
+                            method: 'POST',
+                            body: photoFormData
+                        });
+                        
+                        if (!photoResponse.ok) {
+                            throw new Error('Failed to upload profile photo');
+                        }
+                    }
+
+                    const response = await fetch('/update_profile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        alert('Profile updated successfully!');
+                        closeModal();
+                        
+                        // If username changed, reload after a brief delay to reflect the change
+                        if (data.username_changed) {
+                            setTimeout(() => location.reload(), 500);
+                        } else {
+                            // Otherwise just reload to refresh display
+                            setTimeout(() => location.reload(), 500);
+                        }
+                    } else {
+                        alert('Error: ' + (data.error || 'Failed to update profile'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating your profile');
+                }
+            });
+
+            // Edit username button
+            const editUsernameBtn = document.getElementById('editUsernameBtn');
+            if (editUsernameBtn) {
+                editUsernameBtn.addEventListener('click', () => {
+                    profileModal.classList.add('active');
+                    document.getElementById('username').focus();
+                });
+            }
+        });
+
+        // Add fade-in animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .profile-edit-icon-btn {
+                background: none;
+                border: none;
+                color: #4f8cff;
+                cursor: pointer;
+                font-size: 0.9rem;
+                padding: 0.25rem 0.5rem;
+                transition: all 0.3s ease;
+                border-radius: 4px;
+            }
+            .profile-edit-icon-btn:hover {
+                background: rgba(79, 140, 255, 0.1);
+                transform: scale(1.15);
+            }
+            .show-toggle-btn {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                justify-content: center;
+                font-size: 0.95rem;
+            }
+            #profilePhotoImg {
+                box-shadow: 0 4px 12px rgba(79, 140, 255, 0.3);
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
